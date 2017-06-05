@@ -1,0 +1,10 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "eu.gcr.io/$PROJECT_ID/kali", "."]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["run", "--privileged", "-v", "/workspace/cache:/live-build-config/cache", "-v", "/workspace/images:/live-build-config/images", "--rm", "eu.gcr.io/$PROJECT_ID/kali"]
+  - name: gcr.io/cloud-builders/gsutil
+    args: ['cp', '/workspace/images/kali-linux-ethjar-rolling-amd64.iso', 'gs://ethjar-store/iso/kali-linux-ethjar-rolling-amd64-$REVISION_ID.iso']
+
+timeout: 1h
+images: ["eu.gcr.io/$PROJECT_ID/kali"]
