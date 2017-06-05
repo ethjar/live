@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Clone current app.
+cd /root
+git clone https://github.com/ethjar/app.git
+
