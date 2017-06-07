@@ -1,10 +1,14 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "eu.gcr.io/$PROJECT_ID/kali", "."]
+    args: ["build", "-t", "eu.gcr.io/$PROJECT_ID/debian:bootstrap", "."]
   - name: "gcr.io/cloud-builders/docker"
-    args: ["run", "--privileged", "-v", "/workspace/cache:/live-build-config/cache", "-v", "/workspace/images:/live-build-config/images", "--rm", "eu.gcr.io/$PROJECT_ID/kali"]
+    args: ["run", "--name", "ethjar_bootstrap", "--privileged", "eu.gcr.io/$PROJECT_ID/debian:bootstrap"]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["commit", "-m", "chroot init", "ethjar_bootstrap", "eu.gcr.io/$PROJECT_ID/debian:chroot"]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["run", "-v", "/workspace:/workspace", "--rm", "--privileged", "--entrypoint", "/root/live_boot/mkusb.sh", "eu.gcr.io/$PROJECT_ID/debian:chroot"]
   - name: gcr.io/cloud-builders/gsutil
-    args: ['cp', '/workspace/images/kali-linux-ethjar-rolling-amd64.iso', 'gs://ethjar-store/iso/kali-linux-ethjar-rolling-amd64-$REVISION_ID.iso']
+    args: ['cp', '/workspace/image/disk.img', 'gs://ethjar-store/iso/debian-linux-ethjar-amd64-$REVISION_ID.img']
 
-timeout: 1h
-images: ["eu.gcr.io/$PROJECT_ID/kali"]
+timeout: 3600s
+images: ["eu.gcr.io/$PROJECT_ID/debian:bootstrap", "eu.gcr.io/$PROJECT_ID/debian:chroot"]

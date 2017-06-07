@@ -1,10 +1,21 @@
-FROM kalilinux/kali-linux-docker
+FROM debian:stretch-slim
 
-RUN apt-get update # 20170605
-RUN apt-get install -y parted git live-build cdebootstrap debootstrap curl
-ADD live-build-config /live-build-config
+ENV DEBIAN_FRONTEND=noninteractive
 
-VOLUME "/live-build-config/images"
-WORKDIR "/live-build-config"
-ENTRYPOINT ["/live-build-config/build.sh"]
-CMD ["--distribution", "kali-rolling", "--variant", "ethjar", "--verbose"]
+RUN apt-get update # 20170607
+RUN apt-get install -y dosfstools debootstrap syslinux isolinux squashfs-tools \
+    genisoimage memtest86+ rsync gdisk \
+    grub2-common grub-efi-amd64
+
+RUN mkdir /root/live_boot
+# Download packages to prepare for chrooting which requires privileged.
+RUN debootstrap --download-only --arch=i386 --variant=minbase stretch \
+    /root/live_boot/chroot http://ftp.se.debian.org/debian/
+
+# Our steps for configuring within the chroot that will be executed separate.
+ADD bootstrap.sh /root/live_boot/
+ADD mkusb.sh /root/live_boot/
+ADD chroot.sh /root/live_boot/chroot/
+
+ENTRYPOINT ["/root/live_boot/bootstrap.sh"]
+VOLUME "/workspace/images"
