@@ -1,10 +1,25 @@
-# Default target
-all: iso
+PROJECT_ID?=ethjar-store
 
-ethjar/kali:
-	docker build -t ethjar/kali .
+all: docker
+.PHONY: all
 
-iso: ethjar/kali
-	docker run -v $(CURDIR)/images:/live-build-config/images --rm --privileged -ti ethjar/kali
+bootstrap:
+	docker build -t iso_bootstrap .
+.PHONY: bootstrap
 
-.PHONY: iso ethjar/kali
+docker: bootstrap
+	docker run --name iso_bootstrap \
+		--privileged iso_bootstrap chroot /srv/fai/nfsroot /build.sh
+	docker commit \
+		--change='CMD ["fai-cd", "-fMJd", "", "-g", "/etc/fai/grub.cfg", "/workspace/ethjar.iso"]' \
+		-m 'chroot customization' \
+		iso_bootstrap eu.gcr.io/$(PROJECT_ID)/ethjar:live
+.PHONY: docker
+
+console:
+	docker run --rm -ti -v $(CURDIR):/workspace --privileged eu.gcr.io/$(PROJECT_ID)/ethjar:live /bin/bash
+.PHONY: console
+
+clean:
+	-docker rm -f iso_bootstrap
+.PHONY: clean

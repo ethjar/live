@@ -1,10 +1,11 @@
-FROM kalilinux/kali-linux-docker
+FROM eu.gcr.io/ethjar-store/ethjar:fai
 
-RUN apt-get update # 20170605
-RUN apt-get install -y parted git live-build cdebootstrap debootstrap curl
-ADD live-build-config /live-build-config
+RUN mkdir -p /srv/fai/config
+RUN cp -a /usr/share/doc/fai-doc/examples/simple/* /srv/fai/config/
+RUN cp /etc/resolv.conf /srv/fai/nfsroot/etc/resolv.conf
 
-VOLUME "/live-build-config/images"
-WORKDIR "/live-build-config"
-ENTRYPOINT ["/live-build-config/build.sh"]
-CMD ["--distribution", "kali-rolling", "--variant", "ethjar", "--verbose"]
+ADD grub.cfg /etc/fai/grub.cfg
+ADD build.sh /srv/fai/nfsroot/build.sh
+
+VOLUME "/workspace"
+WORKDIR "/workspace"
